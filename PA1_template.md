@@ -1,5 +1,5 @@
 # Reproducible Research: Peer Assessment 1
-## Global Setting
+
 
 
 ## Set required library

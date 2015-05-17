@@ -4,7 +4,7 @@ output:
   html_document:
     keep_md: true
 ---
-## Global Setting
+
 ```{r setoptions,echo=FALSE,message=FALSE,warning=FALSE}
 library(knitr)
 opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE)
