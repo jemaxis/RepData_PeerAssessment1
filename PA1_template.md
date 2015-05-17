@@ -1,4 +1,5 @@
 # Reproducible Research: Peer Assessment 1
+## Global Setting
 
 
 ## Set required library
@@ -9,7 +10,8 @@ library(ggplot2)
 ```
 
 ## Loading and preprocessing the data
-The data is loaded into a dataframe called "data".
+- Store the data "activity.csv" in a working directory (E.g."C:\\Rassignment\\Cse5Project1"")
+- The data, a csv file format, is loaded into a dataframe called "data".
 
 ```r
 setwd("C:\\Rassignment\\Cse5Project1")
@@ -19,7 +21,6 @@ data <- read.csv("activity.csv",header = TRUE,stringsAsFactor=FALSE)
 ## What is mean total number of steps taken per day?
 
 ```r
-library(dplyr)
 nonNaData <- filter(data,!is.na(steps))
 byDate <- group_by(nonNaData,date)
 result1 <- summarise(byDate,sumsteps=sum(steps))
@@ -31,8 +32,8 @@ hist(result1$sumsteps,breaks = 20,col="red",ylim=c(0,12),xlim=c(0,25000), xlab="
 - The mean and median is calculated as follow:
 
 ```r
-meanStep <- as.character(round(mean(result1$sumsteps),2))
-medianStep <- median(result1$sumsteps)
+meanStepWithNA <- as.character(round(mean(result1$sumsteps),2))
+medianStepWithNA <- as.character(round(median(result1$sumsteps),0))
 ```
 The mean total number of steps per day is 10766.19 and the median is 10765.
 
@@ -42,7 +43,7 @@ The mean total number of steps per day is 10766.19 and the median is 10765.
 ```r
 byInterval <- group_by(nonNaData,interval)
 result2 <- summarise(byInterval,avgsteps = mean(steps))
-plot(x=result2$interval,y=result2$avgsteps,type="l",xlab="5 Minute Interval",ylab="Average Number Of Steps", main="Average Daily Activity Pattern")
+plot(x=result2$interval,y=result2$avgsteps,type="l",xlab="5-Minute Interval",ylab="Average Number Of Steps", main="Average Daily Activity Pattern")
 ```
 
 ![](PA1_template_files/figure-html/dailyActivityPattern-1.png) 
@@ -50,13 +51,14 @@ plot(x=result2$interval,y=result2$avgsteps,type="l",xlab="5 Minute Interval",yla
 - Calculation to identify 5-min interval with highest average steps is:
 
 ```r
-maxStep <- result2$interval[which(result2$avgsteps==max(result2$avgsteps))]
+maxStepInt <- result2$interval[which(result2$avgsteps==max(result2$avgsteps))]
 ```
-The 5-min interval with highest average steps across all the days is 835.
+The 5-minute interval with highest average steps across all the days is 835.
 
 ## Imputing missing values
-
-- Function to replace NA values in the data using mean step for each 5-min interval: 
+- Initial strategy was to replace the NA values using the mean of the total sum of steps for that day.  Unfortunately, the NA values occur for an entire day leading to all NA values being replaced with zero value. 
+- The strategy finally used is to replace all the NA values at the interval level based on the mean step for each 5-minute interval. 
+- Function to replace NA values in the data using mean step for each 5-minute interval is as follow: 
 
 ```r
 replaceNaStepsByInterval <- function(argData){   
@@ -87,28 +89,18 @@ completeData <- replaceNaStepsByInterval(data)
 ```r
 dataByDay <- group_by(completeData,date)
 result4 <- summarise(dataByDay,sumsteps=sum(steps))
-hist(result4$sumsteps,breaks = 20,col="red",ylim=c(0,20), xlab="Total Number of steps per day", main="Histogram of Total Number of Steps Per Day\nWith NA Values Replaced")
+hist(result4$sumsteps,breaks = 20,col="red",ylim=c(0,20),xlim=c(0,25000),xlab="Total Number of steps per day", main="Histogram of Total Number of Steps Per Day\nWith NA Values Replaced")
 ```
 
 ![](PA1_template_files/figure-html/plotHistComplete-1.png) 
 
-- The mean and median are calculated as follow:
+- The  mean and median total number of steps taken per day for the above histogram are calculated as follow:
 
 ```r
-mean(result4$sumsteps)
+meanStepWithNoNA <- as.character(round(mean(result4$sumsteps),2))
+medianStepWithNoNA <- as.character(round(median(result4$sumsteps),0))
 ```
-
-```
-## [1] 10766.19
-```
-
-```r
-median(result4$sumsteps)
-```
-
-```
-## [1] 10766.19
-```
+- The mean is 10766.19 and the median is 10766.  In comparison with the initial mean 10766.19 and median 10765,  the values does not differ much.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 - Function to calculate if the date falls on a weekday or weekend:
@@ -123,16 +115,19 @@ dayOfWeekFunc <- function(arg){
 }
 ```
 
-- Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends:
-
+- Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
 
 ```r
-colDayInd <- sapply(completeData$date,dayOfWeekFunc)
-View(colDayInd)
+colDayInd <- sapply(completeData$date,dayOfWeekFunc) # to create a column of "weekend" or "weekday" value.
 result5<-cbind(completeData,DayIndicator=colDayInd)
+```
+
+- Create a panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends:
+
+```r
 grpByInterval <- group_by(result5,interval,DayIndicator)
 resultPlot <- summarise(grpByInterval,averagestep = mean(steps))
-qplot(interval,averagestep,data=resultPlot,facets=DayIndicator~.,geom="line",xlab="5-min Interval",ylab="Average Number Of Steps")
+qplot(interval,averagestep,data=resultPlot,facets=DayIndicator~.,geom="line",xlab="5-minute Interval",ylab="Average Number Of Steps")
 ```
 
 ![](PA1_template_files/figure-html/panelPlot-1.png) 
